@@ -1,24 +1,30 @@
 #include "context.h"
 #include <stdio.h>
-#include <stdlib.h>
 
-context_t ctx;
-extern int set_ctx(context_t *ctx);
-extern void jmp_to(context_t *ctx, int value);
-int i;
+context_t main_ctx;
+context_t worker_ctx;
+char worker_stack[4096];
 
-void oh_p() {
-    if (i == 0)
-        jmp_to(&ctx, 2);
-    else if (i == 2)
-        jmp_to(&ctx, 3);
+void worker_func()
+{
+    jmp_to(&main_ctx, 123);
+}
+
+int main(void)
+{
+    set_ctx(&main_ctx);
+
+    if (main_ctx.rip == 0)
+    {
+        worker_ctx.rsp = (unsigned long)(worker_stack + sizeof(worker_stack));
+        worker_ctx.rip = (unsigned long)worker_func;
+        jmp_to(&worker_ctx, 0);
+    }
     else
-        exit(0);
+    {
+        printf("023");
+    }
+
+    return 0;
 }
 
-int main() {
-    i = set_ctx(&ctx);
-    printf("%d", i);
-    oh_p();
-    printf("[Error]: This line should not be printed!");
-}
